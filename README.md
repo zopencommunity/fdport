@@ -24,7 +24,7 @@ fd -t d lib          # find directories named lib
 # How this port was built
 
 `fd` is written in Rust. Because the Rust toolchain is not yet natively available
-on z/OS, this port was **cross-compiled** on a Linux-on-Z (LoP) host using an
+on z/OS, this port was **cross-compiled** on a Linux-on-Power (LoP, ppc64le) host using an
 IBM-internal Rust cross-compilation toolchain targeting `s390x-ibm-zos`.
 
 The cross-compilation infrastructure and all required patches to upstream Rust
@@ -38,6 +38,8 @@ The patches cover the following crates that required z/OS-specific fixes:
 - `nix` — z/OS signal numbers, `errno` variants, `unistd` APIs
 - `memmap2` — no-op C stubs for `madvise`/`mlock`/`munlock` (absent on z/OS)
 - `fd` itself — z/OS `S_IFMT` file type constants differ from POSIX
+
+The host machine used for cross-compilation is a Linux on Power (ppc64le) system.
 
 The resulting binary is statically linked against the Rust standard library
 and dynamically linked against the z/OS system libraries (`libc.a`, `libzoslib.so`).
