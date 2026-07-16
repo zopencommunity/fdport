@@ -4,7 +4,8 @@ FD_VERSION="10.3.0"
 export ZOPEN_PROJECT_NAME="fd"
 export ZOPEN_NAME="fd-${FD_VERSION}"
 export ZOPEN_BUILD_LINE="STABLE"
-export ZOPEN_STABLE_URL="https://github.com/sharkdp/fd/releases/download/v${FD_VERSION}/fd-v${FD_VERSION}-x86_64-unknown-linux-musl.tar.gz"
+export ZOPEN_STABLE_URL="https://github.com/sharkdp/fd.git"
+export ZOPEN_STABLE_TAG="v${FD_VERSION}"
 export ZOPEN_STABLE_DEPS=" "
 export ZOPEN_DEV_URL="https://github.com/sharkdp/fd.git"
 export ZOPEN_DEV_DEPS=""
@@ -31,6 +32,9 @@ zopen_get_version() {
   echo "${FD_VERSION}"
 }
 
+# The z/OS binary was cross-compiled from source on a Linux-on-Z host
+# targeting s390x-ibm-zos using the Rust cross-compilation toolchain.
+# See: https://github.com/zopencommunity/fdport/blob/main/README.md
 zopen_init() {
   cp /home/itodoro/fd ./fd
   chtag -b ./fd
