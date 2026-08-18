@@ -1,0 +1,11 @@
+diff -ru '--exclude=*.lock' '--exclude=.cargo-checksum.json' /home/itodorov/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/errno-0.3.14/src/unix.rs b/errno-0.3.14/src/unix.rs
+--- a/errno-0.3.14/src/unix.rs	2006-07-23 21:21:28.000000000 -0400
++++ b/errno-0.3.14/src/unix.rs	2026-07-14 13:48:56.140749413 -0400
+@@ -99,6 +99,7 @@
+         link_name = "__errno_location"
+     )]
+     #[cfg_attr(target_os = "aix", link_name = "_Errno")]
++    #[cfg_attr(target_os = "zos", link_name = "__errno")]
+     #[cfg_attr(target_os = "nto", link_name = "__get_errno_ptr")]
+     fn errno_location() -> *mut c_int;
+ }

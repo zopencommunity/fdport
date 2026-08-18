@@ -1,0 +1,700 @@
+diff -ru '--exclude=*.lock' '--exclude=.cargo-checksum.json' /home/itodorov/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/nix-0.30.1/src/errno.rs b/nix-0.30.1/src/errno.rs
+--- a/nix-0.30.1/src/errno.rs	2006-07-23 21:21:28.000000000 -0400
++++ b/nix-0.30.1/src/errno.rs	2026-07-14 13:36:45.473687121 -0400
+@@ -45,10 +45,14 @@
+         unsafe fn errno_location() -> *mut c_int {
+             unsafe { libc::_errnop() }
+         }
+-    } else if #[cfg(any(target_os = "aix"))] {
++    } else if #[cfg(target_os = "aix")] {
+         unsafe fn errno_location() -> *mut c_int {
+             unsafe { libc::_Errno() }
+         }
++    } else if #[cfg(target_os = "zos")] {
++        unsafe fn errno_location() -> *mut c_int {
++            unsafe { libc::__errno() }
++        }
+     }
+ }
+ 
+@@ -488,7 +492,7 @@
+         #[cfg(any(
+             linux_android,
+             solarish,
+-            target_os = "aix",
++            target_os = "aix", target_os = "zos",
+             target_os = "fuchsia",
+             target_os = "emscripten",
+         ))]
+@@ -524,7 +528,7 @@
+         #[cfg(any(
+             linux_android,
+             solarish,
+-            target_os = "aix",
++            target_os = "aix", target_os = "zos",
+             target_os = "fuchsia",
+             target_os = "emscripten",
+             target_os = "cygwin",
+@@ -534,7 +538,7 @@
+         #[cfg(any(
+             linux_android,
+             solarish,
+-            target_os = "aix",
++            target_os = "aix", target_os = "zos",
+             target_os = "fuchsia",
+             target_os = "emscripten",
+         ))]
+@@ -550,7 +554,7 @@
+ 
+         #[cfg(any(
+             linux_android,
+-            target_os = "aix",
++            target_os = "aix", target_os = "zos",
+             target_os = "fuchsia",
+             target_os = "emscripten",
+             target_os = "cygwin",
+@@ -562,7 +566,7 @@
+ 
+         #[cfg(any(
+             linux_android,
+-            target_os = "aix",
++            target_os = "aix", target_os = "zos",
+             target_os = "fuchsia",
+             target_os = "haiku",
+             target_os = "hurd",
+@@ -647,7 +651,7 @@
+         #[cfg(any(
+             linux_android,
+             solarish,
+-            target_os = "aix",
++            target_os = "aix", target_os = "zos",
+             target_os = "fuchsia",
+             target_os = "openbsd",
+             target_os = "emscripten",
+@@ -802,7 +806,7 @@
+ 
+         #[cfg(any(
+             linux_android,
+-            target_os = "aix",
++            target_os = "aix", target_os = "zos",
+             target_os = "fuchsia",
+             target_os = "hurd",
+             target_os = "emscripten",
+@@ -815,7 +819,7 @@
+ 
+         #[cfg(any(
+             linux_android,
+-            target_os = "aix",
++            target_os = "aix", target_os = "zos",
+             target_os = "fuchsia",
+             target_os = "emscripten",
+             target_os = "cygwin",
+@@ -912,7 +916,7 @@
+ 
+         #[cfg(any(
+             bsd,
+-            target_os = "aix",
++            target_os = "aix", target_os = "zos",
+             solarish,
+             target_os = "haiku",
+             target_os = "hurd",
+@@ -922,7 +926,7 @@
+ 
+         #[cfg(any(
+             bsd,
+-            target_os = "aix",
++            target_os = "aix", target_os = "zos",
+             target_os = "hurd",
+             target_os = "cygwin"
+         ))]
+@@ -930,7 +934,7 @@
+ 
+         #[cfg(any(
+             bsd,
+-            target_os = "aix",
++            target_os = "aix", target_os = "zos",
+             target_os = "hurd",
+             target_os = "redox"
+         ))]
+@@ -940,7 +944,7 @@
+             bsd,
+             solarish,
+             target_os = "redox",
+-            target_os = "aix",
++            target_os = "aix", target_os = "zos",
+             target_os = "haiku",
+             target_os = "hurd"
+         ))]
+@@ -950,12 +954,12 @@
+             bsd,
+             solarish,
+             target_os = "redox",
+-            target_os = "aix",
++            target_os = "aix", target_os = "zos",
+             target_os = "haiku"
+         ))]
+         ESTALE => "Stale NFS file handle",
+ 
+-        #[cfg(any(bsd, target_os = "aix", target_os = "redox"))]
++        #[cfg(any(bsd, target_os = "aix", target_os = "zos", target_os = "redox"))]
+         EREMOTE => "Too many levels of remote in path",
+ 
+         #[cfg(any(bsd, target_os = "hurd"))]
+@@ -981,7 +985,7 @@
+ 
+         #[cfg(any(
+             bsd,
+-            target_os = "aix",
++            target_os = "aix", target_os = "zos",
+             target_os = "hurd",
+             target_os = "redox"
+         ))]
+@@ -1010,7 +1014,7 @@
+ 
+         #[cfg(any(
+             apple_targets,
+-            target_os = "aix",
++            target_os = "aix", target_os = "zos",
+             target_os = "netbsd",
+             target_os = "redox"
+         ))]
+@@ -1021,7 +1025,7 @@
+ 
+         #[cfg(any(
+             apple_targets,
+-            target_os = "aix",
++            target_os = "aix", target_os = "zos",
+             target_os = "netbsd",
+             target_os = "redox"
+         ))]
+@@ -1029,7 +1033,7 @@
+ 
+         #[cfg(any(
+             apple_targets,
+-            target_os = "aix",
++            target_os = "aix", target_os = "zos",
+             target_os = "netbsd",
+             target_os = "redox"
+         ))]
+@@ -1037,13 +1041,13 @@
+ 
+         #[cfg(any(
+             apple_targets,
+-            target_os = "aix",
++            target_os = "aix", target_os = "zos",
+             target_os = "netbsd",
+             target_os = "redox"
+         ))]
+         ETIME => "STREAM ioctl timeout",
+ 
+-        #[cfg(any(apple_targets, solarish, target_os = "aix"))]
++        #[cfg(any(apple_targets, solarish, target_os = "aix", target_os = "zos"))]
+         EOPNOTSUPP => "Operation not supported on socket",
+ 
+         #[cfg(apple_targets)]
+@@ -1285,13 +1289,21 @@
+             libc::ELOOP => ELOOP,
+             libc::ENOMSG => ENOMSG,
+             libc::EIDRM => EIDRM,
++            #[cfg(not(target_os = "zos"))]
+             libc::ECHRNG => ECHRNG,
++            #[cfg(not(target_os = "zos"))]
+             libc::EL2NSYNC => EL2NSYNC,
++            #[cfg(not(target_os = "zos"))]
+             libc::EL3HLT => EL3HLT,
++            #[cfg(not(target_os = "zos"))]
+             libc::EL3RST => EL3RST,
++            #[cfg(not(target_os = "zos"))]
+             libc::ELNRNG => ELNRNG,
++            #[cfg(not(target_os = "zos"))]
+             libc::EUNATCH => EUNATCH,
++            #[cfg(not(target_os = "zos"))]
+             libc::ENOCSI => ENOCSI,
++            #[cfg(not(target_os = "zos"))]
+             libc::EL2HLT => EL2HLT,
+             libc::EBADE => EBADE,
+             libc::EBADR => EBADR,
+@@ -1325,6 +1337,7 @@
+             libc::ELIBMAX => ELIBMAX,
+             libc::ELIBEXEC => ELIBEXEC,
+             libc::EILSEQ => EILSEQ,
++            #[cfg(not(target_os = "zos"))]
+             libc::ERESTART => ERESTART,
+             libc::ESTRPIPE => ESTRPIPE,
+             libc::EUSERS => EUSERS,
+@@ -2872,13 +2885,21 @@
+             libc::ERANGE => ERANGE,
+             libc::ENOMSG => ENOMSG,
+             libc::EIDRM => EIDRM,
++            #[cfg(not(target_os = "zos"))]
+             libc::ECHRNG => ECHRNG,
++            #[cfg(not(target_os = "zos"))]
+             libc::EL2NSYNC => EL2NSYNC,
++            #[cfg(not(target_os = "zos"))]
+             libc::EL3HLT => EL3HLT,
++            #[cfg(not(target_os = "zos"))]
+             libc::EL3RST => EL3RST,
++            #[cfg(not(target_os = "zos"))]
+             libc::ELNRNG => ELNRNG,
++            #[cfg(not(target_os = "zos"))]
+             libc::EUNATCH => EUNATCH,
++            #[cfg(not(target_os = "zos"))]
+             libc::ENOCSI => ENOCSI,
++            #[cfg(not(target_os = "zos"))]
+             libc::EL2HLT => EL2HLT,
+             libc::EDEADLK => EDEADLK,
+             libc::ENOLCK => ENOLCK,
+@@ -2924,6 +2945,7 @@
+             libc::EILSEQ => EILSEQ,
+             libc::ENOSYS => ENOSYS,
+             libc::ELOOP => ELOOP,
++            #[cfg(not(target_os = "zos"))]
+             libc::ERESTART => ERESTART,
+             libc::ESTRPIPE => ESTRPIPE,
+             libc::ENOTEMPTY => ENOTEMPTY,
+@@ -3140,7 +3162,7 @@
+     }
+ }
+ 
+-#[cfg(target_os = "aix")]
++#[cfg(any(target_os = "aix", target_os = "zos"))]
+ mod consts {
+     #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+     #[repr(i32)]
+@@ -3216,13 +3238,23 @@
+         ECONNREFUSED = libc::ECONNREFUSED,
+         EHOSTDOWN = libc::EHOSTDOWN,
+         EHOSTUNREACH = libc::EHOSTUNREACH,
++        // The following are Linux/AIX-specific errno codes that do not exist
++        // on z/OS (their numeric values conflict with z/OS errnos above).
++        #[cfg(not(target_os = "zos"))]
+         ECHRNG = libc::ECHRNG,
++        #[cfg(not(target_os = "zos"))]
+         EL2NSYNC = libc::EL2NSYNC,
++        #[cfg(not(target_os = "zos"))]
+         EL3HLT = libc::EL3HLT,
++        #[cfg(not(target_os = "zos"))]
+         EL3RST = libc::EL3RST,
++        #[cfg(not(target_os = "zos"))]
+         ELNRNG = libc::ELNRNG,
++        #[cfg(not(target_os = "zos"))]
+         EUNATCH = libc::EUNATCH,
++        #[cfg(not(target_os = "zos"))]
+         ENOCSI = libc::ENOCSI,
++        #[cfg(not(target_os = "zos"))]
+         EL2HLT = libc::EL2HLT,
+         ENOLINK = libc::ENOLINK,
+         EPROTO = libc::EPROTO,
+@@ -3230,6 +3262,7 @@
+         EBADMSG = libc::EBADMSG,
+         EOVERFLOW = libc::EOVERFLOW,
+         EILSEQ = libc::EILSEQ,
++        #[cfg(not(target_os = "zos"))]
+         ERESTART = libc::ERESTART,
+         EOWNERDEAD = libc::EOWNERDEAD,
+         ENOTRECOVERABLE = libc::ENOTRECOVERABLE,
+@@ -3324,13 +3357,21 @@
+             libc::ECONNREFUSED => ECONNREFUSED,
+             libc::EHOSTDOWN => EHOSTDOWN,
+             libc::EHOSTUNREACH => EHOSTUNREACH,
++            #[cfg(not(target_os = "zos"))]
+             libc::ECHRNG => ECHRNG,
++            #[cfg(not(target_os = "zos"))]
+             libc::EL2NSYNC => EL2NSYNC,
++            #[cfg(not(target_os = "zos"))]
+             libc::EL3HLT => EL3HLT,
++            #[cfg(not(target_os = "zos"))]
+             libc::EL3RST => EL3RST,
++            #[cfg(not(target_os = "zos"))]
+             libc::ELNRNG => ELNRNG,
++            #[cfg(not(target_os = "zos"))]
+             libc::EUNATCH => EUNATCH,
++            #[cfg(not(target_os = "zos"))]
+             libc::ENOCSI => ENOCSI,
++            #[cfg(not(target_os = "zos"))]
+             libc::EL2HLT => EL2HLT,
+             libc::ENOLINK => ENOLINK,
+             libc::EPROTO => EPROTO,
+@@ -3338,6 +3379,7 @@
+             libc::EBADMSG => EBADMSG,
+             libc::EOVERFLOW => EOVERFLOW,
+             libc::EILSEQ => EILSEQ,
++            #[cfg(not(target_os = "zos"))]
+             libc::ERESTART => ERESTART,
+             libc::ENOTRECOVERABLE => ENOTRECOVERABLE,
+             libc::EOWNERDEAD => EOWNERDEAD,
+@@ -3767,13 +3809,21 @@
+             libc::ERANGE => ERANGE,
+             libc::ENOMSG => ENOMSG,
+             libc::EIDRM => EIDRM,
++            #[cfg(not(target_os = "zos"))]
+             libc::ECHRNG => ECHRNG,
++            #[cfg(not(target_os = "zos"))]
+             libc::EL2NSYNC => EL2NSYNC,
++            #[cfg(not(target_os = "zos"))]
+             libc::EL3HLT => EL3HLT,
++            #[cfg(not(target_os = "zos"))]
+             libc::EL3RST => EL3RST,
++            #[cfg(not(target_os = "zos"))]
+             libc::ELNRNG => ELNRNG,
++            #[cfg(not(target_os = "zos"))]
+             libc::EUNATCH => EUNATCH,
++            #[cfg(not(target_os = "zos"))]
+             libc::ENOCSI => ENOCSI,
++            #[cfg(not(target_os = "zos"))]
+             libc::EL2HLT => EL2HLT,
+             libc::EDEADLK => EDEADLK,
+             libc::ENOLCK => ENOLCK,
+diff -ru '--exclude=*.lock' '--exclude=.cargo-checksum.json' /home/itodorov/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/nix-0.30.1/src/fcntl.rs b/nix-0.30.1/src/fcntl.rs
+--- a/nix-0.30.1/src/fcntl.rs	2006-07-23 21:21:28.000000000 -0400
++++ b/nix-0.30.1/src/fcntl.rs	2026-07-14 13:37:03.605705496 -0400
+@@ -127,7 +127,7 @@
+         /// Generate a signal when input or output becomes possible.
+         #[cfg(not(any(
+             solarish,
+-            target_os = "aix",
++            target_os = "aix", target_os = "zos",
+             target_os = "haiku",
+             target_os = "cygwin"
+         )))]
+diff -ru '--exclude=*.lock' '--exclude=.cargo-checksum.json' /home/itodorov/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/nix-0.30.1/src/features.rs b/nix-0.30.1/src/features.rs
+--- a/nix-0.30.1/src/features.rs	2006-07-23 21:21:28.000000000 -0400
++++ b/nix-0.30.1/src/features.rs	2026-07-14 13:27:39.901715219 -0400
+@@ -114,6 +114,7 @@
+ 
+ #[cfg(any(
+     target_os = "aix",
++    target_os = "zos",
+     apple_targets,
+     target_os = "fuchsia",
+     target_os = "haiku",
+diff -ru '--exclude=*.lock' '--exclude=.cargo-checksum.json' /home/itodorov/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/nix-0.30.1/src/sys/signal.rs b/nix-0.30.1/src/sys/signal.rs
+--- a/nix-0.30.1/src/sys/signal.rs	2006-07-23 21:21:28.000000000 -0400
++++ b/nix-0.30.1/src/sys/signal.rs	2026-07-14 13:28:49.693174360 -0400
+@@ -105,12 +105,13 @@
+         SIGSYS,
+         #[cfg(not(any(linux_android, target_os = "emscripten",
+                       target_os = "fuchsia",
++                      target_os = "zos",
+                       target_os = "redox", target_os = "haiku")))]
+         /// Emulator trap
+         SIGEMT,
+         #[cfg(not(any(linux_android, target_os = "emscripten",
+                       target_os = "fuchsia", target_os = "redox",
+-                      target_os = "haiku", target_os = "aix",
++                      target_os = "haiku", target_os = "aix", target_os = "zos",
+                       target_os = "solaris", target_os = "cygwin")))]
+         /// Information request
+         SIGINFO,
+@@ -179,6 +180,7 @@
+                 linux_android,
+                 target_os = "emscripten",
+                 target_os = "fuchsia",
++                target_os = "zos",
+                 target_os = "redox",
+                 target_os = "haiku"
+             )))]
+@@ -188,7 +190,7 @@
+                 target_os = "emscripten",
+                 target_os = "fuchsia",
+                 target_os = "redox",
+-                target_os = "aix",
++                target_os = "aix", target_os = "zos",
+                 target_os = "haiku",
+                 target_os = "solaris",
+                 target_os = "cygwin"
+@@ -265,6 +267,7 @@
+                 linux_android,
+                 target_os = "emscripten",
+                 target_os = "fuchsia",
++                target_os = "zos",
+                 target_os = "redox",
+                 target_os = "haiku"
+             )))]
+@@ -274,7 +277,7 @@
+                 target_os = "emscripten",
+                 target_os = "fuchsia",
+                 target_os = "redox",
+-                target_os = "aix",
++                target_os = "aix", target_os = "zos",
+                 target_os = "haiku",
+                 target_os = "solaris",
+                 target_os = "cygwin"
+@@ -361,6 +364,14 @@
+     SIGURG, SIGPOLL, SIGIO, SIGSTOP, SIGTSTP, SIGCONT, SIGTTIN, SIGTTOU,
+     SIGVTALRM, SIGPROF, SIGXCPU, SIGXFSZ, SIGTRAP,
+ ];
++#[cfg(target_os = "zos")]
++#[cfg(feature = "signal")]
++const SIGNALS: [Signal; 28] = [
++    SIGHUP, SIGINT, SIGQUIT, SIGILL, SIGABRT, SIGFPE, SIGKILL, SIGSEGV,
++    SIGSYS, SIGPIPE, SIGALRM, SIGTERM, SIGUSR1, SIGUSR2, SIGWINCH,
++    SIGURG, SIGPOLL, SIGIO, SIGSTOP, SIGTSTP, SIGCONT, SIGTTIN, SIGTTOU,
++    SIGVTALRM, SIGPROF, SIGXCPU, SIGXFSZ, SIGTRAP,
++];
+ #[cfg(any(target_os = "solaris", target_os = "cygwin"))]
+ #[cfg(feature = "signal")]
+ const SIGNALS: [Signal; 30] = [
+@@ -373,7 +384,7 @@
+     linux_android,
+     target_os = "fuchsia",
+     target_os = "emscripten",
+-    target_os = "aix",
++    target_os = "aix", target_os = "zos",
+     target_os = "redox",
+     target_os = "haiku",
+     target_os = "solaris",
+@@ -611,7 +622,7 @@
+         solarish,
+         target_os = "haiku",
+         target_os = "hurd",
+-        target_os = "aix",
++        target_os = "aix", target_os = "zos",
+         target_os = "fuchsia"
+     ))]
+     #[doc(alias("sigsuspend"))]
+diff -ru '--exclude=*.lock' '--exclude=.cargo-checksum.json' /home/itodorov/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/nix-0.30.1/src/sys/stat.rs b/nix-0.30.1/src/sys/stat.rs
+--- a/nix-0.30.1/src/sys/stat.rs	2006-07-23 21:21:28.000000000 -0400
++++ b/nix-0.30.1/src/sys/stat.rs	2026-07-14 13:35:38.080518175 -0400
+@@ -390,6 +390,7 @@
+ /// # References
+ ///
+ /// [futimens(2)](https://pubs.opengroup.org/onlinepubs/9699919799/functions/futimens.html).
++#[cfg(not(target_os = "zos"))]
+ #[inline]
+ pub fn futimens<Fd: std::os::fd::AsFd>(
+     fd: Fd,
+diff -ru '--exclude=*.lock' '--exclude=.cargo-checksum.json' /home/itodorov/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/nix-0.30.1/src/sys/time.rs b/nix-0.30.1/src/sys/time.rs
+--- a/nix-0.30.1/src/sys/time.rs	2006-07-23 21:21:28.000000000 -0400
++++ b/nix-0.30.1/src/sys/time.rs	2026-07-14 13:29:10.112156691 -0400
+@@ -532,6 +532,8 @@
+         TimeVal(timeval {
+             tv_sec: seconds as time_t,
+             tv_usec: 0,
++            #[cfg(target_os = "zos")]
++            tv_usec_pad: 0,
+         })
+     }
+ 
+@@ -560,6 +562,8 @@
+         TimeVal(timeval {
+             tv_sec: secs as time_t,
+             tv_usec: micros as suseconds_t,
++            #[cfg(target_os = "zos")]
++            tv_usec_pad: 0,
+         })
+     }
+ 
+@@ -581,6 +585,8 @@
+         TimeVal(timeval {
+             tv_sec: secs as time_t,
+             tv_usec: micros as suseconds_t,
++            #[cfg(target_os = "zos")]
++            tv_usec_pad: 0,
+         })
+     }
+ 
+@@ -621,6 +627,8 @@
+         Self(timeval {
+             tv_sec: seconds,
+             tv_usec: microseconds,
++            #[cfg(target_os = "zos")]
++            tv_usec_pad: 0,
+         })
+     }
+ 
+diff -ru '--exclude=*.lock' '--exclude=.cargo-checksum.json' /home/itodorov/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/nix-0.30.1/src/unistd.rs b/nix-0.30.1/src/unistd.rs
+--- a/nix-0.30.1/src/unistd.rs	2006-07-23 21:21:28.000000000 -0400
++++ b/nix-0.30.1/src/unistd.rs	2026-07-14 13:35:44.768803944 -0400
+@@ -1667,7 +1667,7 @@
+ /// Commit filesystem caches to disk
+ ///
+ /// See also [sync(2)](https://pubs.opengroup.org/onlinepubs/9699919799/functions/sync.html)
+-#[cfg(any(bsd, linux_android, solarish, target_os = "haiku", target_os = "aix", target_os = "hurd"))]
++#[cfg(any(bsd, linux_android, solarish, target_os = "haiku", target_os = "aix", target_os = "zos", target_os = "hurd"))]
+ pub fn sync() {
+     unsafe { libc::sync() };
+ }
+@@ -1709,7 +1709,7 @@
+     target_os = "freebsd",
+     target_os = "emscripten",
+     target_os = "fuchsia",
+-    target_os = "aix",
++    target_os = "aix", target_os = "zos",
+     target_os = "hurd",
+ ))]
+ #[inline]
+@@ -1945,7 +1945,7 @@
+     cfg_if! {
+         if #[cfg(any(bsd,
+                      solarish,
+-                     target_os = "aix",
++                     target_os = "aix", target_os = "zos",
+                      target_os = "cygwin"))] {
+             type setgroups_ngroups_t = c_int;
+         } else {
+@@ -1986,7 +1986,7 @@
+ /// partial list of groups when `NGROUPS_MAX` is exceeded, this implementation
+ /// will only ever return the complete list or else an error.
+ #[cfg(not(any(
+-    target_os = "aix",
++    target_os = "aix", target_os = "zos",
+     solarish,
+     apple_targets,
+     target_os = "redox",
+@@ -2292,6 +2292,7 @@
+ /// Err is returned either if no temporary filename could be created or the template had insufficient X
+ ///
+ /// See also [mkstemp(2)](http://pubs.opengroup.org/onlinepubs/9699919799/functions/mkdtemp.html)
++#[cfg(not(target_os = "zos"))]
+ ///
+ /// ```
+ /// use nix::unistd;
+@@ -3479,13 +3480,14 @@
+     /// Username
+     pub name: String,
+     /// User password (probably hashed)
++    #[cfg(not(target_os = "zos"))]
+     pub passwd: CString,
+     /// User ID
+     pub uid: Uid,
+     /// Group ID
+     pub gid: Gid,
+     /// User information
+-    #[cfg(not(all(target_os = "android", target_pointer_width = "32")))]
++    #[cfg(not(any(all(target_os = "android", target_pointer_width = "32"), target_os = "zos")))]
+     pub gecos: CString,
+     /// Home directory
+     pub dir: PathBuf,
+@@ -3495,7 +3497,7 @@
+     #[cfg(not(any(
+         linux_android,
+         solarish,
+-        target_os = "aix",
++        target_os = "aix", target_os = "zos",
+         target_os = "fuchsia",
+         target_os = "haiku",
+         target_os = "hurd",
+@@ -3507,7 +3509,7 @@
+     #[cfg(not(any(
+         linux_android,
+         solarish,
+-        target_os = "aix",
++        target_os = "aix", target_os = "zos",
+         target_os = "fuchsia",
+         target_os = "haiku",
+         target_os = "hurd",
+@@ -3519,7 +3521,7 @@
+     #[cfg(not(any(
+         linux_android,
+         solarish,
+-        target_os = "aix",
++        target_os = "aix", target_os = "zos",
+         target_os = "fuchsia",
+         target_os = "haiku",
+         target_os = "hurd",
+@@ -3539,15 +3541,16 @@
+                 } else {
+                     CStr::from_ptr(pw.pw_name).to_string_lossy().into_owned()
+                 },
++                #[cfg(not(target_os = "zos"))]
+                 passwd: if pw.pw_passwd.is_null() {
+                     Default::default()
+                 } else {
+                     CString::new(CStr::from_ptr(pw.pw_passwd).to_bytes())
+                         .unwrap()
+                 },
+-                #[cfg(not(all(
+-                    target_os = "android",
+-                    target_pointer_width = "32"
++                #[cfg(not(any(
++                    all(target_os = "android", target_pointer_width = "32"),
++                    target_os = "zos"
+                 )))]
+                 gecos: if pw.pw_gecos.is_null() {
+                     Default::default()
+@@ -3574,7 +3577,7 @@
+                 #[cfg(not(any(
+                     linux_android,
+                     solarish,
+-                    target_os = "aix",
++                    target_os = "aix", target_os = "zos",
+                     target_os = "fuchsia",
+                     target_os = "haiku",
+                     target_os = "hurd",
+@@ -3586,7 +3589,7 @@
+                 #[cfg(not(any(
+                     linux_android,
+                     solarish,
+-                    target_os = "aix",
++                    target_os = "aix", target_os = "zos",
+                     target_os = "fuchsia",
+                     target_os = "haiku",
+                     target_os = "hurd",
+@@ -3597,7 +3600,7 @@
+                 #[cfg(not(any(
+                     linux_android,
+                     solarish,
+-                    target_os = "aix",
++                    target_os = "aix", target_os = "zos",
+                     target_os = "fuchsia",
+                     target_os = "haiku",
+                     target_os = "hurd",
+@@ -3627,10 +3630,11 @@
+         };
+         Self {
+             pw_name: name,
++            #[cfg(not(target_os = "zos"))]
+             pw_passwd: u.passwd.into_raw(),
+-            #[cfg(not(all(
+-                target_os = "android",
+-                target_pointer_width = "32"
++            #[cfg(not(any(
++                all(target_os = "android", target_pointer_width = "32"),
++                target_os = "zos"
+             )))]
+             pw_gecos: u.gecos.into_raw(),
+             pw_dir: dir,
+@@ -3640,7 +3644,7 @@
+             #[cfg(not(any(
+                 linux_android,
+                 solarish,
+-                target_os = "aix",
++                target_os = "aix", target_os = "zos",
+                 target_os = "fuchsia",
+                 target_os = "haiku",
+                 target_os = "hurd",
+@@ -3651,7 +3655,7 @@
+             #[cfg(not(any(
+                 linux_android,
+                 solarish,
+-                target_os = "aix",
++                target_os = "aix", target_os = "zos",
+                 target_os = "fuchsia",
+                 target_os = "haiku",
+                 target_os = "hurd",
+@@ -3662,7 +3666,7 @@
+             #[cfg(not(any(
+                 linux_android,
+                 solarish,
+-                target_os = "aix",
++                target_os = "aix", target_os = "zos",
+                 target_os = "fuchsia",
+                 target_os = "haiku",
+                 target_os = "hurd",
+@@ -3791,6 +3795,7 @@
+     /// Group name
+     pub name: String,
+     /// Group password
++    #[cfg(not(target_os = "zos"))]
+     pub passwd: CString,
+     /// Group ID
+     pub gid: Gid,
+@@ -3808,6 +3813,7 @@
+                 } else {
+                     CStr::from_ptr(gr.gr_name).to_string_lossy().into_owned()
+                 },
++                #[cfg(not(target_os = "zos"))]
+                 passwd: if gr.gr_passwd.is_null() {
+                     Default::default()
+                 } else {

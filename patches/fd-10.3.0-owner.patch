@@ -1,0 +1,22 @@
+diff --git a/src/filter/owner.rs b/src/filter/owner.rs
+index 3ee38d7..07d24d7 100644
+--- a/src/filter/owner.rs
++++ b/src/filter/owner.rs
+@@ -40,7 +40,7 @@ impl OwnerFilter {
+                 Ok(uid)
+             } else {
+                 User::from_name(s)?
+-                    .map(|user| user.uid.as_raw())
++                    .map(|user| user.uid.as_raw() as u32)
+                     .ok_or_else(|| anyhow!("'{}' is not a recognized user name", s))
+             }
+         })?;
+@@ -49,7 +49,7 @@ impl OwnerFilter {
+                 Ok(gid)
+             } else {
+                 Group::from_name(s)?
+-                    .map(|group| group.gid.as_raw())
++                    .map(|group| group.gid.as_raw() as u32)
+                     .ok_or_else(|| anyhow!("'{}' is not a recognized group name", s))
+             }
+         })?;

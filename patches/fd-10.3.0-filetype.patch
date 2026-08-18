@@ -1,0 +1,358 @@
+diff --git a/src/filesystem.rs b/src/filesystem.rs
+index 4a04f9d..284f5ac 100644
+--- a/src/filesystem.rs
++++ b/src/filesystem.rs
+@@ -3,14 +3,142 @@ use std::env;
+ use std::ffi::OsStr;
+ use std::fs;
+ use std::io;
+-#[cfg(any(unix, target_os = "redox"))]
+-use std::os::unix::fs::FileTypeExt;
+ use std::path::{Path, PathBuf};
+ 
+ use normpath::PathExt;
+ 
+ use crate::dir_entry;
+ 
++// z/OS uses non-POSIX st_mode constants (S_IFREG=0x03000000, S_IFDIR=0x01000000,
++// S_IFLNK=0x05000000, S_IFBLK=0x06000000, S_IFMT=0xFF000000). Rust std is compiled
++// with POSIX masks (0x8000, 0x4000) so FileType::is_file()/is_dir()/is_symlink()
++// always return false. Use st_mode directly via MetadataExt on z/OS.
++#[cfg(target_os = "zos")]
++mod zos_filetype {
++    use std::fs;
++    use std::os::unix::fs::MetadataExt;
++
++    const S_IFMT:   u32 = 0xFF00_0000;
++    const S_IFREG:  u32 = 0x0300_0000;
++    const S_IFDIR:  u32 = 0x0100_0000;
++    const S_IFLNK:  u32 = 0x0500_0000; // from libc-zos; 0x06=S_IFBLK on z/OS
++    const S_IFBLK:  u32 = 0x0600_0000;
++    const S_IFCHR:  u32 = 0x0200_0000;
++    const S_IFSOCK: u32 = 0x0700_0000;
++    const S_IFIFO:  u32 = 0x0400_0000;
++
++    fn mode_type(md: Option<&fs::Metadata>) -> Option<u32> {
++        md.map(|m| m.mode() & S_IFMT)
++    }
++
++    pub fn is_file(ft: &fs::FileType, md: Option<&fs::Metadata>) -> bool {
++        mode_type(md).map_or_else(|| ft.is_file(), |t| t == S_IFREG)
++    }
++
++    pub fn is_dir(ft: &fs::FileType, md: Option<&fs::Metadata>) -> bool {
++        mode_type(md).map_or_else(|| ft.is_dir(), |t| t == S_IFDIR)
++    }
++
++    pub fn is_symlink(ft: &fs::FileType, md: Option<&fs::Metadata>) -> bool {
++        mode_type(md).map_or_else(|| ft.is_symlink(), |t| t == S_IFLNK)
++    }
++
++    pub fn is_block_device(_ft: &fs::FileType, md: Option<&fs::Metadata>) -> bool {
++        mode_type(md).map_or(false, |t| t == S_IFBLK)
++    }
++
++    pub fn is_char_device(_ft: &fs::FileType, md: Option<&fs::Metadata>) -> bool {
++        mode_type(md).map_or(false, |t| t == S_IFCHR)
++    }
++
++    pub fn is_socket(_ft: &fs::FileType, md: Option<&fs::Metadata>) -> bool {
++        mode_type(md).map_or(false, |t| t == S_IFSOCK)
++    }
++
++    pub fn is_pipe(_ft: &fs::FileType, md: Option<&fs::Metadata>) -> bool {
++        mode_type(md).map_or(false, |t| t == S_IFIFO)
++    }
++}
++
++// Non-z/OS: thin wrappers that just call FileType methods.
++#[cfg(not(target_os = "zos"))]
++mod zos_filetype {
++    use std::fs;
++
++    #[inline]
++    pub fn is_file(ft: &fs::FileType, _md: Option<&fs::Metadata>) -> bool {
++        ft.is_file()
++    }
++
++    #[inline]
++    pub fn is_dir(ft: &fs::FileType, _md: Option<&fs::Metadata>) -> bool {
++        ft.is_dir()
++    }
++
++    #[inline]
++    pub fn is_symlink(ft: &fs::FileType, _md: Option<&fs::Metadata>) -> bool {
++        ft.is_symlink()
++    }
++
++    #[inline]
++    pub fn is_block_device(ft: &fs::FileType, _md: Option<&fs::Metadata>) -> bool {
++        use std::os::unix::fs::FileTypeExt;
++        ft.is_block_device()
++    }
++
++    #[inline]
++    pub fn is_char_device(ft: &fs::FileType, _md: Option<&fs::Metadata>) -> bool {
++        use std::os::unix::fs::FileTypeExt;
++        ft.is_char_device()
++    }
++
++    #[inline]
++    pub fn is_socket(ft: &fs::FileType, _md: Option<&fs::Metadata>) -> bool {
++        use std::os::unix::fs::FileTypeExt;
++        ft.is_socket()
++    }
++
++    #[inline]
++    pub fn is_pipe(ft: &fs::FileType, _md: Option<&fs::Metadata>) -> bool {
++        use std::os::unix::fs::FileTypeExt;
++        ft.is_fifo()
++    }
++}
++
++pub use zos_filetype::{is_file as ft_is_file, is_dir as ft_is_dir, is_symlink as ft_is_symlink};
++
++// z/OS-aware Path::is_file() — uses stat + S_IFREG check directly.
++pub fn path_is_file(path: &Path) -> bool {
++    #[cfg(target_os = "zos")]
++    {
++        use std::os::unix::fs::MetadataExt;
++        const S_IFMT:  u32 = 0xFF00_0000;
++        const S_IFREG: u32 = 0x0300_0000;
++        match fs::metadata(path) {
++            Ok(m) => (m.mode() & S_IFMT) == S_IFREG,
++            Err(_) => false,
++        }
++    }
++    #[cfg(not(target_os = "zos"))]
++    path.is_file()
++}
++
++// z/OS-aware Path::is_dir() — uses stat + S_IFDIR check directly.
++pub fn path_is_dir(path: &Path) -> bool {
++    #[cfg(target_os = "zos")]
++    {
++        use std::os::unix::fs::MetadataExt;
++        const S_IFMT:  u32 = 0xFF00_0000;
++        const S_IFDIR: u32 = 0x0100_0000;
++        match fs::metadata(path) {
++            Ok(m) => (m.mode() & S_IFMT) == S_IFDIR,
++            Err(_) => false,
++        }
++    }
++    #[cfg(not(target_os = "zos"))]
++    path.is_dir()
++}
++
+ pub fn path_absolute_form(path: &Path) -> io::Result<PathBuf> {
+     if path.is_absolute() {
+         return Ok(path.to_path_buf());
+@@ -38,18 +166,19 @@ pub fn absolute_path(path: &Path) -> io::Result<PathBuf> {
+ pub fn is_existing_directory(path: &Path) -> bool {
+     // Note: we do not use `.exists()` here, as `.` always exists, even if
+     // the CWD has been deleted.
+-    path.is_dir() && (path.file_name().is_some() || path.normalize().is_ok())
++    path_is_dir(path) && (path.file_name().is_some() || path.normalize().is_ok())
+ }
+ 
+ pub fn is_empty(entry: &dir_entry::DirEntry) -> bool {
+     if let Some(file_type) = entry.file_type() {
+-        if file_type.is_dir() {
++        let md = entry.metadata();
++        if ft_is_dir(&file_type, md) {
+             if let Ok(mut entries) = fs::read_dir(entry.path()) {
+                 entries.next().is_none()
+             } else {
+                 false
+             }
+-        } else if file_type.is_file() {
++        } else if ft_is_file(&file_type, md) {
+             entry.metadata().map(|m| m.len() == 0).unwrap_or(false)
+         } else {
+             false
+@@ -60,42 +189,42 @@ pub fn is_empty(entry: &dir_entry::DirEntry) -> bool {
+ }
+ 
+ #[cfg(any(unix, target_os = "redox"))]
+-pub fn is_block_device(ft: fs::FileType) -> bool {
+-    ft.is_block_device()
++pub fn is_block_device(ft: &fs::FileType, md: Option<&fs::Metadata>) -> bool {
++    zos_filetype::is_block_device(ft, md)
+ }
+ 
+ #[cfg(windows)]
+-pub fn is_block_device(_: fs::FileType) -> bool {
++pub fn is_block_device(_: &fs::FileType, _: Option<&fs::Metadata>) -> bool {
+     false
+ }
+ 
+ #[cfg(any(unix, target_os = "redox"))]
+-pub fn is_char_device(ft: fs::FileType) -> bool {
+-    ft.is_char_device()
++pub fn is_char_device(ft: &fs::FileType, md: Option<&fs::Metadata>) -> bool {
++    zos_filetype::is_char_device(ft, md)
+ }
+ 
+ #[cfg(windows)]
+-pub fn is_char_device(_: fs::FileType) -> bool {
++pub fn is_char_device(_: &fs::FileType, _: Option<&fs::Metadata>) -> bool {
+     false
+ }
+ 
+ #[cfg(any(unix, target_os = "redox"))]
+-pub fn is_socket(ft: fs::FileType) -> bool {
+-    ft.is_socket()
++pub fn is_socket(ft: &fs::FileType, md: Option<&fs::Metadata>) -> bool {
++    zos_filetype::is_socket(ft, md)
+ }
+ 
+ #[cfg(windows)]
+-pub fn is_socket(_: fs::FileType) -> bool {
++pub fn is_socket(_: &fs::FileType, _: Option<&fs::Metadata>) -> bool {
+     false
+ }
+ 
+ #[cfg(any(unix, target_os = "redox"))]
+-pub fn is_pipe(ft: fs::FileType) -> bool {
+-    ft.is_fifo()
++pub fn is_pipe(ft: &fs::FileType, md: Option<&fs::Metadata>) -> bool {
++    zos_filetype::is_pipe(ft, md)
+ }
+ 
+ #[cfg(windows)]
+-pub fn is_pipe(_: fs::FileType) -> bool {
++pub fn is_pipe(_: &fs::FileType, _: Option<&fs::Metadata>) -> bool {
+     false
+ }
+ 
+diff --git a/src/filetypes.rs b/src/filetypes.rs
+index a10924b..df2b3eb 100644
+--- a/src/filetypes.rs
++++ b/src/filetypes.rs
+@@ -1,5 +1,5 @@
+ use crate::dir_entry;
+-use crate::filesystem;
++use crate::filesystem::{self, ft_is_dir, ft_is_file, ft_is_symlink};
+ 
+ use faccess::PathExt;
+ 
+@@ -20,22 +20,23 @@ pub struct FileTypes {
+ impl FileTypes {
+     pub fn should_ignore(&self, entry: &dir_entry::DirEntry) -> bool {
+         if let Some(ref entry_type) = entry.file_type() {
+-            (!self.files && entry_type.is_file())
+-                || (!self.directories && entry_type.is_dir())
+-                || (!self.symlinks && entry_type.is_symlink())
+-                || (!self.block_devices && filesystem::is_block_device(*entry_type))
+-                || (!self.char_devices && filesystem::is_char_device(*entry_type))
+-                || (!self.sockets && filesystem::is_socket(*entry_type))
+-                || (!self.pipes && filesystem::is_pipe(*entry_type))
++            let md = entry.metadata();
++            (!self.files && ft_is_file(entry_type, md))
++                || (!self.directories && ft_is_dir(entry_type, md))
++                || (!self.symlinks && ft_is_symlink(entry_type, md))
++                || (!self.block_devices && filesystem::is_block_device(entry_type, md))
++                || (!self.char_devices && filesystem::is_char_device(entry_type, md))
++                || (!self.sockets && filesystem::is_socket(entry_type, md))
++                || (!self.pipes && filesystem::is_pipe(entry_type, md))
+                 || (self.executables_only && !entry.path().executable())
+                 || (self.empty_only && !filesystem::is_empty(entry))
+-                || !(entry_type.is_file()
+-                    || entry_type.is_dir()
+-                    || entry_type.is_symlink()
+-                    || filesystem::is_block_device(*entry_type)
+-                    || filesystem::is_char_device(*entry_type)
+-                    || filesystem::is_socket(*entry_type)
+-                    || filesystem::is_pipe(*entry_type))
++                || !(ft_is_file(entry_type, md)
++                    || ft_is_dir(entry_type, md)
++                    || ft_is_symlink(entry_type, md)
++                    || filesystem::is_block_device(entry_type, md)
++                    || filesystem::is_char_device(entry_type, md)
++                    || filesystem::is_socket(entry_type, md)
++                    || filesystem::is_pipe(entry_type, md))
+         } else {
+             true
+         }
+diff --git a/src/main.rs b/src/main.rs
+index 94623eb..3f7ed1b 100644
+--- a/src/main.rs
++++ b/src/main.rs
+@@ -28,6 +28,7 @@ use crate::cli::{ColorWhen, HyperlinkWhen, Opts};
+ use crate::config::Config;
+ use crate::exec::CommandSet;
+ use crate::exit_codes::ExitCode;
++use crate::filesystem::path_is_dir;
+ use crate::filetypes::FileTypes;
+ #[cfg(unix)]
+ use crate::filter::OwnerFilter;
+@@ -149,7 +150,7 @@ fn set_working_dir(opts: &Opts) -> Result<()> {
+ fn ensure_search_pattern_is_not_a_path(opts: &Opts) -> Result<()> {
+     if !opts.full_path
+         && opts.pattern.contains(std::path::MAIN_SEPARATOR)
+-        && Path::new(&opts.pattern).is_dir()
++        && path_is_dir(Path::new(&opts.pattern))
+     {
+         Err(anyhow!(
+             "The search pattern '{pattern}' contains a path-separation character ('{sep}') \
+diff --git a/src/output.rs b/src/output.rs
+index facebc7..4084378 100644
+--- a/src/output.rs
++++ b/src/output.rs
+@@ -5,6 +5,7 @@ use lscolors::{Indicator, LsColors, Style};
+ 
+ use crate::config::Config;
+ use crate::dir_entry::DirEntry;
++use crate::filesystem::ft_is_dir;
+ use crate::fmt::FormatTemplate;
+ use crate::hyperlink::PathUrl;
+ 
+@@ -51,7 +52,7 @@ fn print_trailing_slash<W: Write>(
+     config: &Config,
+     style: Option<&Style>,
+ ) -> io::Result<()> {
+-    if entry.file_type().is_some_and(|ft| ft.is_dir()) {
++    if entry.file_type().is_some_and(|ft| ft_is_dir(&ft, entry.metadata())) {
+         write!(
+             stdout,
+             "{}",
+diff --git a/src/walk.rs b/src/walk.rs
+index 0991e1c..f4b33d0 100644
+--- a/src/walk.rs
++++ b/src/walk.rs
+@@ -20,7 +20,7 @@ use crate::dir_entry::DirEntry;
+ use crate::error::print_error;
+ use crate::exec;
+ use crate::exit_codes::{merge_exitcodes, ExitCode};
+-use crate::filesystem;
++use crate::filesystem::{self, ft_is_symlink, path_is_file};
+ use crate::output;
+ 
+ /// The receiver thread can either be buffering results or directly streaming to the console.
+@@ -371,7 +371,7 @@ impl WorkerState {
+         if config.read_global_ignore {
+             if let Ok(basedirs) = etcetera::choose_base_strategy() {
+                 let global_ignore_file = basedirs.config_dir().join("fd").join("ignore");
+-                if global_ignore_file.is_file() {
++                if path_is_file(&global_ignore_file) {
+                     let result = builder.add_ignore(global_ignore_file);
+                     match result {
+                         Some(ignore::Error::Partial(_)) => (),
+@@ -477,7 +477,7 @@ impl WorkerState {
+                                 && path
+                                     .symlink_metadata()
+                                     .ok()
+-                                    .is_some_and(|m| m.file_type().is_symlink()) =>
++                                    .is_some_and(|m| ft_is_symlink(&m.file_type(), Some(&m))) =>
+                         {
+                             DirEntry::broken_symlink(path)
+                         }
+@@ -563,7 +563,7 @@ impl WorkerState {
+ 
+                 // Filter out unwanted sizes if it is a file and we have been given size constraints.
+                 if !config.size_constraints.is_empty() {
+-                    if entry_path.is_file() {
++                    if path_is_file(entry_path) {
+                         if let Some(metadata) = entry.metadata() {
+                             let file_size = metadata.len();
+                             if config

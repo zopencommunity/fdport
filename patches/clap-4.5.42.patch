@@ -1,0 +1,56 @@
+diff -ru '--exclude=*.lock' '--exclude=.cargo-checksum.json' /home/itodorov/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/clap-4.5.42/Cargo.toml b/clap-4.5.42/Cargo.toml
+--- a/clap-4.5.42/Cargo.toml	1969-12-31 19:00:01.000000000 -0500
++++ b/clap-4.5.42/Cargo.toml	2026-07-14 13:58:02.114365275 -0400
+@@ -112,7 +112,7 @@
+ color = ["clap_builder/color"]
+ debug = [
+     "clap_builder/debug",
+-    "clap_derive?/debug",
++    "clap_derive/debug",
+ ]
+ default = [
+     "std",
+@@ -124,9 +124,9 @@
+ ]
+ deprecated = [
+     "clap_builder/deprecated",
+-    "clap_derive?/deprecated",
++    "clap_derive/deprecated",
+ ]
+-derive = ["dep:clap_derive"]
++derive = []
+ env = ["clap_builder/env"]
+ error-context = ["clap_builder/error-context"]
+ help = ["clap_builder/help"]
+@@ -144,7 +144,7 @@
+ unstable-styles = ["clap_builder/unstable-styles"]
+ unstable-v5 = [
+     "clap_builder/unstable-v5",
+-    "clap_derive?/unstable-v5",
++    "clap_derive/unstable-v5",
+     "deprecated",
+ ]
+ usage = ["clap_builder/usage"]
+@@ -514,7 +514,6 @@
+ 
+ [dependencies.clap_derive]
+ version = "=4.5.41"
+-optional = true
+ 
+ [dev-dependencies.automod]
+ version = "1.0.14"
+diff -ru '--exclude=*.lock' '--exclude=.cargo-checksum.json' /home/itodorov/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/clap-4.5.42/src/lib.rs b/clap-4.5.42/src/lib.rs
+--- a/clap-4.5.42/src/lib.rs	2006-07-23 21:21:28.000000000 -0400
++++ b/clap-4.5.42/src/lib.rs	2026-07-14 13:59:54.345408540 -0400
+@@ -88,7 +88,11 @@
+ pub use clap_builder::*;
+ #[cfg(feature = "derive")]
+ #[doc(hidden)]
++#[cfg(not(target_os = "zos"))]
+ pub use clap_derive::{self, Args, Parser, Subcommand, ValueEnum};
++#[cfg(all(feature = "derive", target_os = "zos"))]
++#[doc(hidden)]
++pub use clap_derive::{Args, Parser, Subcommand, ValueEnum};
+ 
+ #[cfg(feature = "unstable-doc")]
+ pub mod _cookbook;

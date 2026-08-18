@@ -1,0 +1,17 @@
+diff --git a/Cargo.toml b/Cargo.toml
+index 077f072..43eac15 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -93,3 +93,12 @@ use-jemalloc = ["tikv-jemallocator"]
+ completions = ["clap_complete"]
+ base = ["use-jemalloc"]
+ default = ["use-jemalloc", "completions"]
++
++[patch.crates-io]
++libc    = { path = "/tmp/libc-zos" }
++rustix  = { path = "/tmp/rustix-zos" }
++nix     = { path = "/tmp/nix-zos" }
++memmap2 = { path = "/tmp/memmap2-zos" }
++ctrlc   = { path = "/tmp/ctrlc-zos" }
++errno   = { path = "/tmp/errno-zos" }
++clap    = { path = "/tmp/clap-zos" }
